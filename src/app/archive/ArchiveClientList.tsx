@@ -32,9 +32,9 @@ export function checkDateStatus(contentHtml: string, title?: string): { status: 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const fullText = (title || '') + ' ' + (contentHtml || '');
 
-  // 1. 팩트 박스 또는 본문에서 청약 접수일 패턴 (YYYY-MM-DD 또는 YYYY.MM.DD) 정확한 추출
-  const applyMatch = fullText.match(/(?:청약\s*접수일|접수일|청약일정|접수)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i) ||
-                     fullText.match(/🗓️\s*청약\s*접수일:[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i);
+  // 1. 팩트 박스 또는 본문에서 청약 접수일 패턴 (HTML 태그 허용하여 YYYY-MM-DD 또는 YYYY.MM.DD 정확히 매칭)
+  const applyMatch = fullText.match(/(?:청약\s*접수일|청약접수일|접수일)[\s\S]{0,150}?(202[4-9][-.]\d{2}[-.]\d{2})/i) ||
+                     fullText.match(/RCEPT_BGNDE[\s\S]{0,50}?(202[4-9][-.]\d{2}[-.]\d{2})/i);
 
   if (applyMatch) {
     const applyDate = applyMatch[1].replace(/\./g, '-');
@@ -47,26 +47,12 @@ export function checkDateStatus(contentHtml: string, title?: string): { status: 
     }
   }
 
-  // 2. 제목에 (오늘 접수)가 명시된 경우만 TODAY로 인지
+  // 2. 제목에 (오늘 접수) 또는 (오늘 접수중) 포함 시에만 TODAY 인지
   if (title && (title.includes('오늘 접수') || title.includes('오늘 접수중'))) {
     return { status: 'TODAY', applyDateStr: todayStr };
   }
 
-  // 3. 본문의 날짜 스캔 후 비교
-  const allDates = Array.from(fullText.matchAll(/202[4-9][-.]\d{2}[-.]\d{2}/g)).map(m => m[0].replace(/\./g, '-'));
-  if (allDates.length > 0) {
-    // 날짜가 오늘의 날짜보다 이전이면 무조건 ENDED(청약 마감) 처리
-    const hasToday = allDates.some(d => d === todayStr);
-    if (hasToday) {
-      return { status: 'TODAY', applyDateStr: todayStr };
-    }
-    const hasUpcoming = allDates.some(d => d > todayStr);
-    if (hasUpcoming) {
-      return { status: 'UPCOMING' };
-    }
-    return { status: 'ENDED' };
-  }
-
+  // 3. 접수일 매칭 실패 시 기본값은 ENDED (마감) 처리하여 과거 단지가 오늘 접수로 오분류되는 버그 차단
   return { status: 'ENDED' };
 }
 
