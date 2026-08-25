@@ -26,30 +26,15 @@ import { ko } from 'date-fns/locale';
 
 export type DateStatus = 'TODAY' | 'ENDED' | 'UPCOMING';
 
-export function checkDateStatus(contentHtml: string): { status: DateStatus; applyDateStr?: string } {
-  if (!contentHtml) return { status: 'UPCOMING' };
+export function checkDateStatus(contentHtml: string, title?: string): { status: DateStatus; applyDateStr?: string } {
+  if (!contentHtml && !title) return { status: 'ENDED' };
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const fullText = (title || '') + ' ' + (contentHtml || '');
 
-  if (contentHtml.includes('오늘 접수') || contentHtml.includes(todayStr) || contentHtml.includes(todayStr.replace(/-/g, '.'))) {
-    const applyMatch = contentHtml.match(/(?:접수|청약접수일|청약\s*접수)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i) ||
-                       contentHtml.match(/(?:📍\s*청약일정|청약일정)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i);
-
-    if (applyMatch) {
-      const applyDate = applyMatch[1].replace(/\./g, '-');
-      if (applyDate === todayStr) {
-        return { status: 'TODAY', applyDateStr: applyDate };
-      } else if (applyDate < todayStr) {
-        return { status: 'ENDED', applyDateStr: applyDate };
-      } else {
-        return { status: 'UPCOMING', applyDateStr: applyDate };
-      }
-    }
-    return { status: 'TODAY', applyDateStr: todayStr };
-  }
-
-  const applyMatch = contentHtml.match(/(?:접수|청약접수일|청약\s*접수)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i) ||
-                     contentHtml.match(/(?:📍\s*청약일정|청약일정)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i);
+  // 1. 팩트 박스 또는 본문에서 청약 접수일 패턴 (YYYY-MM-DD 또는 YYYY.MM.DD) 정확한 추출
+  const applyMatch = fullText.match(/(?:청약\s*접수일|접수일|청약일정|접수)[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i) ||
+                     fullText.match(/🗓️\s*청약\s*접수일:[^2]*?(202[4-9][-.]\d{2}[-.]\d{2})/i);
 
   if (applyMatch) {
     const applyDate = applyMatch[1].replace(/\./g, '-');
@@ -62,19 +47,27 @@ export function checkDateStatus(contentHtml: string): { status: DateStatus; appl
     }
   }
 
-  const allDates = Array.from(contentHtml.matchAll(/202[4-9][-.]\d{2}[-.]\d{2}/g)).map(m => m[0].replace(/\./g, '-'));
-  if (allDates.length >= 2) {
-    const applyDate = allDates[1];
-    if (applyDate === todayStr) {
-      return { status: 'TODAY', applyDateStr: applyDate };
-    } else if (applyDate < todayStr) {
-      return { status: 'ENDED', applyDateStr: applyDate };
-    } else {
-      return { status: 'UPCOMING', applyDateStr: applyDate };
-    }
+  // 2. 제목에 (오늘 접수)가 명시된 경우만 TODAY로 인지
+  if (title && (title.includes('오늘 접수') || title.includes('오늘 접수중'))) {
+    return { status: 'TODAY', applyDateStr: todayStr };
   }
 
-  return { status: 'UPCOMING' };
+  // 3. 본문의 날짜 스캔 후 비교
+  const allDates = Array.from(fullText.matchAll(/202[4-9][-.]\d{2}[-.]\d{2}/g)).map(m => m[0].replace(/\./g, '-'));
+  if (allDates.length > 0) {
+    // 날짜가 오늘의 날짜보다 이전이면 무조건 ENDED(청약 마감) 처리
+    const hasToday = allDates.some(d => d === todayStr);
+    if (hasToday) {
+      return { status: 'TODAY', applyDateStr: todayStr };
+    }
+    const hasUpcoming = allDates.some(d => d > todayStr);
+    if (hasUpcoming) {
+      return { status: 'UPCOMING' };
+    }
+    return { status: 'ENDED' };
+  }
+
+  return { status: 'ENDED' };
 }
 
 export interface NewsletterItem {
@@ -205,7 +198,7 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
     return initialNewsletters.map((item) => {
       const region = detectRegion(item.title, item.content_html);
       const aptName = parseAptName(item.title);
-      const { status, applyDateStr } = checkDateStatus(item.content_html);
+      const { status, applyDateStr } = checkDateStatus(item.content_html, item.title);
       return {
         ...item,
         region,
