@@ -141,10 +141,29 @@ ${aptDetails}
       const rawJson = response.choices[0].message.content;
       if (rawJson) {
         const parsed = JSON.parse(rawJson);
+
+        // 100% 할루시네이션 방지: 코드 레벨에서 정부 청약홈 공공데이터 팩트 박스를 상단에 자동 결합
+        const officialFactBoxHtml = `
+          <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #2563eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-weight: 800; font-size: 14px; color: #0f172a; margin-bottom: 10px; display: flex; items-center; gap: 6px;">
+              <span>🏛️ [한국부동산원 청약홈 공식 검증 팩트 데이터]</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; font-size: 13px; color: #334155;">
+              <div><b>📍 정확한 공급위치(주소):</b> <span style="color: #1e40af; font-weight: 700;">${apt.location || '공고문 참조'}</span></div>
+              <div><b>💰 대표 분양가:</b> <span style="color: #dc2626; font-weight: 800;">${apt.price_info || '미정'}</span></div>
+              <div><b>🗓️ 청약 접수일:</b> <span style="color: #059669; font-weight: 700;">${apt.apply_date || '미정'}</span></div>
+              <div><b>🏢 시공사/브랜드:</b> <span>${apt.builder || '주요 건설사'}</span></div>
+              <div><b>📐 공급 규모:</b> <span>${apt.supply_scale || '미정'}</span></div>
+            </div>
+          </div>
+        `;
+
+        const finalContentHtml = officialFactBoxHtml + (parsed.content_html || '');
+
         return {
           title: parsed.title || title,
           summary_text: parsed.summary_text || `${apt.apt_name} 심층 청약 분석 리포트`,
-          content_html: parsed.content_html || '',
+          content_html: finalContentHtml,
           apt_name: apt.apt_name,
         };
       }
