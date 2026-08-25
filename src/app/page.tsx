@@ -38,7 +38,7 @@ export default async function Home() {
             <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-600/20">
               <Building2 className="h-5 w-5" />
             </div>
-            <span>청약 헬퍼 뉴스레터</span>
+            <span>집모아 (ZipMoa)</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export default async function Home() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-            🏢 전국 아파트 & 줍줍 청약 심층 뉴스레터
+            🏠 집모아 - 전국 아파트 & 줍줍 분양 심층 뉴스레터
           </h1>
 
           <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
@@ -91,7 +91,7 @@ export default async function Home() {
               <FileText className="h-7 w-7" />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-slate-800">등록된 청약 뉴스레터가 없습니다</h3>
+              <h3 className="text-lg font-bold text-slate-800">등록된 집모아 뉴스레터가 없습니다</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 크론 파이프라인이 실행되면 실시간 청약홈 공고가 뉴스레터 분석글로 자동 수집됩니다.
               </p>
@@ -105,7 +105,7 @@ export default async function Home() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto px-4 space-y-2">
-          <p>© {new Date().getFullYear()} 청약 헬퍼 - AI 부동산 청약 정보 자동화 서비스</p>
+          <p>© {new Date().getFullYear()} 집모아 (ZipMoa) - AI 부동산 분양 정보 자동화 서비스</p>
           <p>데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 연동: 네이버 지도</p>
         </div>
       </footer>

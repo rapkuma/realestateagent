@@ -141,7 +141,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                   <Sparkles className="h-3 w-3" />
-                  청약 헬퍼 전면 심층 분석 리포트
+                  집모아 (ZipMoa) 전면 심층 분석 리포트
                 </span>
                 <span className="text-xs text-slate-300">•</span>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -252,7 +252,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
         <div className="max-w-4xl mx-auto px-4 space-y-2">
-          <p>© {new Date().getFullYear()} 청약 헬퍼 - AI 부동산 청약 정보 자동화 서비스</p>
+          <p>© {new Date().getFullYear()} 집모아 (ZipMoa) - AI 부동산 분양 정보 자동화 서비스</p>
           <p>데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 정보: 네이버 지도</p>
         </div>
       </footer>

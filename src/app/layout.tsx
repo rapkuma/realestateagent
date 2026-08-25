@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "🏢 청약 헬퍼 - AI 부동산 청약 뉴스레터",
-  description: "한국부동산원 청약홈 데이터를 기반으로 한 AI 요약 청약 정보 자동화 뉴스레터",
+  title: "🏠 집모아 (ZipMoa) - AI 부동산 분양 & 입지 심층 뉴스레터",
+  description: "한국부동산원 청약홈 공공데이터 기반 AI 부동산 분양가, 세대수, 대출한도, 안전마진 정밀 분석 뉴스레터",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

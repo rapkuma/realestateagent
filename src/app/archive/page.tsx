@@ -98,7 +98,7 @@ export default async function ArchivePage() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto px-4 space-y-2">
-          <p>© {new Date().getFullYear()} 청약 헬퍼 - AI 부동산 청약 정보 자동화 서비스</p>
+          <p>© {new Date().getFullYear()} 집모아 (ZipMoa) - AI 부동산 분양 정보 자동화 서비스</p>
           <p>데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 연동: 네이버 지도</p>
         </div>
       </footer>

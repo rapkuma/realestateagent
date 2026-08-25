@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             <Building2 className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            청약 헬퍼 관리자 로그인
+            집모아 (ZipMoa) 관리자 로그인
           </h1>
           <p className="text-xs text-slate-400">
             부동산 청약 뉴스레터 & 아카이브 통합 대시보드

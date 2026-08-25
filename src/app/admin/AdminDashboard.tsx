@@ -192,7 +192,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-base font-extrabold text-white leading-none">
-                청약 헬퍼 관리자 대시보드
+                집모아 (ZipMoa) 관리자 대시보드
               </h1>
               <span className="text-[11px] text-slate-400 font-medium">RealEstateAgent Admin v1.0</span>
             </div>
