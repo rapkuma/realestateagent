@@ -1,164 +1,114 @@
-"use client";
+import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/button';
+import { Building2, Sparkles, Shield, Clock, FileText, Lock } from 'lucide-react';
+import { ArchiveClientList, NewsletterItem } from '@/app/archive/ArchiveClientList';
+import { SubscribeModalButton } from '@/components/SubscribeModal';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/toast";
-import { Mail, ShieldCheck, Zap, FileText, ArrowRight, BookOpen } from "lucide-react";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export default function Home() {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+async function getNewsletters(): Promise<NewsletterItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from('newsletters')
+      .select('id, title, content_html, sent_at, created_at')
+      .order('created_at', { ascending: false });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email) {
-      toast.add({
-        title: "이메일 입력 필요",
-        description: "구독하실 이메일 주소를 입력해 주세요.",
-        type: "warning",
-      });
-      return;
+    if (error) {
+      console.warn('⚠️ [Homepage] newsletters 조회 실패:', error.message);
+      return [];
     }
+    return data || [];
+  } catch (err) {
+    console.error('❌ [Homepage] Supabase 예외:', err);
+    return [];
+  }
+}
 
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "구독 신청 중 오류가 발생했습니다.");
-      }
-
-      toast.add({
-        title: "구독 완료! 🎉",
-        description: data.message,
-        type: "success",
-      });
-      setEmail("");
-    } catch (error: any) {
-      toast.add({
-        title: "구독 실패",
-        description: error.message,
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export default async function Home() {
+  const newsletters = await getNewsletters();
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 max-w-4xl mx-auto w-full">
-      {/* Top Archive Link Header */}
-      <div className="w-full flex justify-end mb-6">
-        <Link href="/archive">
-          <Button variant="outline" size="sm" className="gap-2 text-slate-600 hover:text-slate-900 shadow-sm">
-            <BookOpen className="h-4 w-4 text-blue-600" />
-            <span>지난 뉴스레터 보기</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </Link>
-      </div>
+    <main className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+      {/* Header Bar */}
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur-sm sticky top-0 z-20 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-black text-slate-900 text-lg tracking-tight">
+            <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-600/20">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <span>청약 헬퍼 뉴스레터</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <SubscribeModalButton />
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" className="gap-1 text-slate-500 hover:text-slate-900 text-xs">
+                <Lock className="h-3.5 w-3.5" />
+                <span>어드민</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
-      <div className="text-center space-y-4 mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-semibold text-blue-800 animate-fade-in">
-          <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-          실시간 청약 정보 서비스
-        </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-          🏢 청약 헬퍼 뉴스레터
-        </h1>
-        <p className="text-base md:text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
-          매주 쏟아지는 아파트 청약 정보, 복잡한 공고문을 직접 볼 필요 없이 AI가 핵심 분양가, 세대수, 일정을 3분 요약하여 메일로 보내드립니다.
-        </p>
-      </div>
+      <section className="bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/60 py-10 md:py-12 px-4">
+        <div className="max-w-6xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-extrabold text-blue-700 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            <span>한국부동산원 청약홈 공공데이터 실시간 수집 연동</span>
+          </div>
 
-      {/* Subscription Form */}
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-slate-700">
-              이메일 주소
-            </label>
-            <div className="relative">
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                className="pl-10 h-11"
-              />
-              <Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+            🏢 전국 아파트 & 줍줍 청약 심층 뉴스레터
+          </h1>
+
+          <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            복잡한 공고문을 직접 읽을 필요 없이, 매일 08:35분 청약홈 공공데이터를 기반으로 
+            <strong>분양가·세대수·2026.8주담대 대출한도·안전마진·입지</strong>를 정밀 분석한 웹 뉴스레터 리포트를 제공합니다.
+          </p>
+
+          <div className="pt-2 flex flex-wrap justify-center gap-4 text-xs font-semibold text-slate-500">
+            <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+              <Shield className="h-3.5 w-3.5 text-blue-600" />
+              100% 공공데이터 무결성 검증
+            </span>
+            <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+              <Clock className="h-3.5 w-3.5 text-orange-500" />
+              매일 08:35 AM 자동 갱신
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content: Web Newsletter Article Cards & Status Tabs */}
+      <section className="flex-1 max-w-6xl mx-auto px-4 py-8 md:py-12 w-full">
+        {newsletters.length === 0 ? (
+          <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center max-w-md mx-auto space-y-4 my-8 shadow-sm">
+            <div className="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
+              <FileText className="h-7 w-7" />
             </div>
-          </div>
-          <Button type="submit" disabled={isLoading} className="w-full h-11 text-base font-semibold">
-            {isLoading ? "구독 신청 중..." : "지금 바로 무료 구독하기"}
-          </Button>
-        </form>
-        <p className="text-xs text-center text-slate-400 leading-relaxed">
-          스팸 메일은 절대 발송하지 않으며, 언제든 클릭 한 번으로 구독을 해제하실 수 있습니다.
-        </p>
-      </div>
-
-      {/* Feature Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14 w-full">
-        {/* Card 1 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex gap-4">
-          <div className="p-2 h-10 w-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <Zap className="h-5 w-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-slate-900 text-sm">AI 핵심 요약</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              수십 페이지의 모집공고문에서 분양가, 세대수, 특별공급 일정을 AI가 명확하게 요약합니다.
-            </p>
-          </div>
-        </div>
-
-        {/* Card 2 */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex gap-4">
-          <div className="p-2 h-10 w-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center shrink-0">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-slate-900 text-sm">100% 무결성 정보</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              가이드 규칙에 따라 주요 수치 정보는 왜곡이나 추측 없이 청약홈의 원본을 제공합니다.
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: Link to Archive */}
-        <Link href="/archive" className="block group">
-          <div className="bg-white border border-slate-200 group-hover:border-blue-300 group-hover:shadow-md transition-all rounded-xl p-5 shadow-sm flex gap-4 h-full">
-            <div className="p-2 h-10 w-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <h3 className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">과거 이력 아카이브</h3>
-                <ArrowRight className="h-3 w-3 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
-              </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-slate-800">등록된 청약 뉴스레터가 없습니다</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                웹 아카이브 블로그를 통해 지난 뉴스레터 발송본 및 청약 정보를 언제든 모아볼 수 있습니다.
+                크론 파이프라인이 실행되면 실시간 청약홈 공고가 뉴스레터 분석글로 자동 수집됩니다.
               </p>
             </div>
           </div>
-        </Link>
-      </div>
+        ) : (
+          <ArchiveClientList initialNewsletters={newsletters} />
+        )}
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 space-y-2">
+          <p>© {new Date().getFullYear()} 청약 헬퍼 - AI 부동산 청약 정보 자동화 서비스</p>
+          <p>데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 연동: 네이버 지도</p>
+        </div>
+      </footer>
     </main>
   );
 }
