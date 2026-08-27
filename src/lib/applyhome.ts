@@ -235,21 +235,14 @@ function normalizeItems(items: any[]): ApartmentData[] {
   });
 }
 
-// 유효 공고 필터링
+// 유효 공고 필터링 (청약 접수일이 오늘이거나 미래인 항목만 수집/분석 대상)
 function filterValidApartments(list: ApartmentData[]): ApartmentData[] {
-  const today = new Date();
-  const pastLimit = subDays(today, 14);
-  const futureLimit = addDays(today, 60);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   return list.filter((apt) => {
-    if (!apt.apply_date) return true;
-    try {
-      const parsed = parseISO(apt.apply_date);
-      if (!isValid(parsed)) return true;
-      return isAfter(parsed, pastLimit) && isBefore(parsed, futureLimit);
-    } catch {
-      return true;
-    }
+    if (!apt.apply_date) return false;
+    // 접수일이 오늘보다 이전(과거)이면 크론 자동화 분석 대상에서 자동 제외!
+    return apt.apply_date >= todayStr;
   });
 }
 
