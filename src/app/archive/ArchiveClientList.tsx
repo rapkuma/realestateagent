@@ -334,12 +334,12 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
           onClick={() => setSelectedStatus('TODAY')}
           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             selectedStatus === 'TODAY'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500/20'
-              : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+              ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-md'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <span>🔥 오늘 청약 접수</span>
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${selectedStatus === 'TODAY' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${selectedStatus === 'TODAY' ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-700'}`}>
             {statusCounts.todayCount}
           </span>
         </button>
