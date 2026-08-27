@@ -20,6 +20,8 @@ import {
   Sparkles,
   Building2,
   Lock,
+  Search,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -178,6 +180,7 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
   const [selectedRegion, setSelectedRegion] = useState<string>('전체');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'TODAY' | 'UPCOMING' | 'ENDED'>('ALL');
   const [sortOption, setSortOption] = useState<'latest' | 'oldest' | 'name'>('latest');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // 각 아이템에 감지된 지역 및 청약 상태 부여
   const itemsWithMeta = useMemo(() => {
@@ -218,9 +221,21 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
     return list;
   }, [itemsWithMeta]);
 
-  // 필터링 및 정렬 적용
+  // 필터링 및 정렬 적용 (실시간 키워드 검색 포함)
   const filteredAndSorted = useMemo(() => {
     let result = [...itemsWithMeta];
+
+    // 실시간 검색 필터
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.aptName.toLowerCase().includes(q) ||
+          item.title.toLowerCase().includes(q) ||
+          item.region.toLowerCase().includes(q) ||
+          (item.applyDateStr && item.applyDateStr.includes(q))
+      );
+    }
 
     // 상태 필터 (오늘 / 예정 / 마감)
     if (selectedStatus === 'TODAY') {
@@ -246,10 +261,59 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
     }
 
     return result;
-  }, [itemsWithMeta, selectedStatus, selectedRegion, sortOption]);
+  }, [itemsWithMeta, searchQuery, selectedStatus, selectedRegion, sortOption]);
 
   return (
     <div className="space-y-6">
+      {/* Real-time Keyword Search Bar */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 md:p-4 shadow-sm space-y-2.5">
+        <div className="relative flex items-center">
+          <Search className="absolute left-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 아파트 단지명, 지역, 청약일 검색 (예: 여의도, 장위, 검암역, 서울, 09-01)..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs md:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200/60 transition-colors"
+              title="검색어 초기화"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Quick Search Tag Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+          <span className="font-semibold text-slate-400 shrink-0 text-[11px]">추천 키워드:</span>
+          {['여의도', '장위', '서수원', '검암역', '해링턴', '노원', '서울'].map((keyword) => (
+            <button
+              key={keyword}
+              onClick={() => setSearchQuery(keyword)}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                searchQuery === keyword
+                  ? 'bg-blue-600 text-white font-bold'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+              }`}
+            >
+              #{keyword}
+            </button>
+          ))}
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-blue-600 hover:underline text-[11px] font-bold ml-auto"
+            >
+              전체보기 ({filteredAndSorted.length}건 검색됨)
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Status Filter Tab Bar (🔥 오늘 / 📅 예정 / 🔒 마감) */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 border border-slate-200 rounded-2xl">
         <button
@@ -350,15 +414,16 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
             <span className="font-semibold text-slate-700">
               총 <strong className="text-slate-900">{filteredAndSorted.length}개</strong>의 아파트 분양 물건
             </span>
-            {(selectedRegion !== '전체' || selectedStatus !== 'ALL') && (
+            {(selectedRegion !== '전체' || selectedStatus !== 'ALL' || searchQuery !== '') && (
               <button
                 onClick={() => {
                   setSelectedRegion('전체');
                   setSelectedStatus('ALL');
+                  setSearchQuery('');
                 }}
-                className="text-blue-600 hover:underline cursor-pointer text-xs"
+                className="text-blue-600 hover:underline cursor-pointer text-xs font-semibold"
               >
-                (필터 초기화)
+                (필터 및 검색어 초기화)
               </button>
             )}
           </div>
