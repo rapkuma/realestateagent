@@ -5,12 +5,11 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { Mail, Sparkles, X, MapPin, Bell } from "lucide-react";
+import { Mail, Sparkles, X, Bell } from "lucide-react";
 
 export function SubscribeModalButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [region, setRegion] = useState<string>("전국");
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -36,7 +35,7 @@ export function SubscribeModalButton() {
       const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, region }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
@@ -87,30 +86,6 @@ export function SubscribeModalButton() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Region Selector */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 text-blue-600" />
-              <span>희망 수신 지역 선택</span>
-            </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {["전국", "서울", "경기", "인천", "전북", "기타"].map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRegion(r)}
-                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                    region === r
-                      ? "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-600/20"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  {r === "전국" ? "🌐 전국" : `📍 ${r}`}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Email Input */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
@@ -141,7 +116,7 @@ export function SubscribeModalButton() {
 
         <div className="flex items-start gap-1.5 bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-[11px] text-blue-900 leading-normal">
           <Bell className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-          <span>선택하신 희망 지역의 신규 무순위(줍줍) 및 1순위 청약 공고 발생 시 즉시 전송해 드립니다.</span>
+          <span>신규 무순위(줍줍) 및 1순위 청약 공고 발생 시 즉시 이메일로 전송해 드립니다.</span>
         </div>
       </div>
     </div>
