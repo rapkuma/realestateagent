@@ -54,10 +54,10 @@ export default function AdminLoginPage() {
             <Building2 className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            집모아 (ZipMoa) 관리자 로그인
+            집모아 (ZipMoa) 로그인
           </h1>
           <p className="text-xs text-slate-400">
-            부동산 청약 뉴스레터 & 아카이브 통합 대시보드
+            부동산 청약 뉴스레터 통합 대시보드
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="username"
               required
               className="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             />
@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
               <span>로그인 중...</span>
             ) : (
               <>
-                <span>관리자 시스템 접속</span>
+                <span>로그인</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
