@@ -107,10 +107,10 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
       {/* Header Navigation */}
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/archive">
-            <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2 text-slate-700 hover:text-slate-900 font-bold">
               <ArrowLeft className="h-4 w-4" />
-              아카이브 목록으로
+              메인으로
             </Button>
           </Link>
           <div className="flex items-center gap-2">

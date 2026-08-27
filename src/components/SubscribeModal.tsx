@@ -126,7 +126,7 @@ export function SubscribeModalButton() {
         className="bg-blue-600 hover:bg-blue-700 font-bold text-xs md:text-sm shadow-md gap-1.5"
       >
         <Mail className="h-4 w-4" />
-        <span>이메일 구독 (부가기능)</span>
+        <span>이메일 구독 (무료)</span>
       </Button>
 
       {mounted && modalContent ? createPortal(modalContent, document.body) : null}

@@ -43,10 +43,10 @@ export default async function Home() {
 
           <div className="flex items-center gap-2">
             <SubscribeModalButton />
-            <Link href="/admin">
-              <Button variant="ghost" size="sm" className="gap-1 text-slate-500 hover:text-slate-900 text-xs">
-                <Lock className="h-3.5 w-3.5" />
-                <span>어드민</span>
+            <Link href="/admin/login">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-slate-700 hover:text-slate-900 text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100">
+                <Lock className="h-3.5 w-3.5 text-slate-500" />
+                <span>🔑 로그인</span>
               </Button>
             </Link>
           </div>
@@ -58,7 +58,7 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-extrabold text-blue-700 shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            <span>한국부동산원 청약홈 공공데이터 실시간 수집 연동</span>
+            <span>⚡ 실시간 청약홈 연동 & AI 자금 시뮬레이션 엔진 탑재</span>
           </div>
 
           <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
@@ -66,18 +66,18 @@ export default async function Home() {
           </h1>
 
           <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            복잡한 공고문을 직접 읽을 필요 없이, 매일 08:35분 청약홈 공공데이터를 기반으로 
-            <strong>분양가·세대수·2026.8주담대 대출한도·안전마진·입지</strong>를 정밀 분석한 웹 뉴스레터 리포트를 제공합니다.
+            복잡한 공고문을 직접 읽을 필요 없이, 청약홈 실시간 공공데이터와 AI 인공지능 분석으로 
+            <strong>분양가·세대수·주담대 대출한도·안전마진·입지</strong>를 정밀 시뮬레이션한 리포트를 제공합니다.
           </p>
 
-          <div className="pt-2 flex flex-wrap justify-center gap-4 text-xs font-semibold text-slate-500">
-            <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-              <Shield className="h-3.5 w-3.5 text-blue-600" />
-              100% 공공데이터 무결성 검증
+          <div className="pt-2 flex flex-wrap justify-center gap-3 text-xs font-bold text-slate-700">
+            <span className="flex items-center gap-1.5 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs">
+              <Shield className="h-4 w-4 text-blue-600" />
+              <span>🛡️ 청약홈 공공데이터 실시간 연동</span>
             </span>
-            <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-              <Clock className="h-3.5 w-3.5 text-orange-500" />
-              매일 08:35 AM 자동 갱신
+            <span className="flex items-center gap-1.5 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs">
+              <Sparkles className="h-4 w-4 text-indigo-600" />
+              <span>🤖 AI 인공지능 정밀 자금 시뮬레이션</span>
             </span>
           </div>
         </div>
