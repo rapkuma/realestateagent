@@ -63,7 +63,7 @@ export function AdminDashboard() {
     try {
       const res = await fetch('/api/admin/newsletters');
       if (res.status === 401) {
-        router.push('/admin/login');
+        router.push('/login');
         return;
       }
       const data = await res.json();
@@ -80,7 +80,7 @@ export function AdminDashboard() {
     try {
       const res = await fetch('/api/admin/subscribers');
       if (res.status === 401) {
-        router.push('/admin/login');
+        router.push('/login');
         return;
       }
       const data = await res.json();
@@ -102,7 +102,7 @@ export function AdminDashboard() {
       method: 'POST',
       body: JSON.stringify({ action: 'logout' }),
     });
-    router.push('/admin/login');
+    router.push('/login');
     router.refresh();
   };
 
