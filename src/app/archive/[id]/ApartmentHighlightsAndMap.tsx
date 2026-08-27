@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from 'react';
-import { MapPin, ExternalLink, Building2, Tag, Landmark, Layers } from 'lucide-react';
+import { useMemo } from 'react';
+import { MapPin, ExternalLink, Building2, Tag, Landmark } from 'lucide-react';
 
 interface ApartmentHighlightsAndMapProps {
   title: string;
@@ -16,8 +16,6 @@ export function ApartmentHighlightsAndMap({
   locationText,
   naverMapUrl,
 }: ApartmentHighlightsAndMapProps) {
-  const [mapEngine, setMapEngine] = useState<'naver' | 'kakao' | 'google'>('naver');
-
   // 1. 평형(공급타입) & 분양가(금액) 정밀 추출 로직
   const { priceInfo, sizeInfo, scaleInfo } = useMemo(() => {
     const sizeMatches = Array.from(
@@ -53,14 +51,8 @@ export function ApartmentHighlightsAndMap({
     };
   }, [contentHtml]);
 
-  // 지도 엔진별 URL 파이프라인
-  const mapUrls = {
-    naver: `https://m.map.naver.com/search2/search.naver?query=${encodeURIComponent(locationText)}`,
-    kakao: `https://m.map.kakao.com/actions/searchView?q=${encodeURIComponent(locationText)}`,
-    google: `https://maps.google.com/maps?q=${encodeURIComponent(locationText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`,
-  };
-
-  const kakaoMapUrl = `https://map.kakao.com/link/search/${encodeURIComponent(locationText)}`;
+  // 지도 Embed URL (Google Maps output=embed query - 100% 임베드 허용)
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(locationText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <div className="space-y-6 my-6">
@@ -112,9 +104,9 @@ export function ApartmentHighlightsAndMap({
         </div>
       </div>
 
-      {/* 🗺️ 상세정보 현장 위치 지도 미리보기 (Multi-Engine Embedded Interactive Map) */}
+      {/* 🗺️ 상세정보 현장 위치 지도 미리보기 (Google Maps Embed) */}
       <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm space-y-3">
-        <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
               <MapPin className="h-4 w-4" />
@@ -129,47 +121,22 @@ export function ApartmentHighlightsAndMap({
             </div>
           </div>
 
-          {/* 지도 엔진 선택 탭 */}
-          <div className="flex items-center gap-1.5 bg-slate-200/60 p-1 rounded-xl">
-            <button
-              onClick={() => setMapEngine('naver')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                mapEngine === 'naver'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🟢 네이버 지도
-            </button>
-            <button
-              onClick={() => setMapEngine('kakao')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                mapEngine === 'kakao'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🟡 카카오 맵
-            </button>
-            <button
-              onClick={() => setMapEngine('google')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                mapEngine === 'google'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🔵 구글 지도
-            </button>
-          </div>
+          <a
+            href={naverMapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs"
+          >
+            <span>네이버 지도 앱으로 크게 보기</span>
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         </div>
 
-        {/* Embedded Interactive Map Canvas Container */}
-        <div className="relative w-full h-[320px] md:h-[380px] bg-slate-100">
+        {/* Embedded Map Canvas Container */}
+        <div className="relative w-full h-[300px] md:h-[350px] bg-slate-100">
           <iframe
-            key={mapEngine}
-            title={`${title} ${mapEngine} 현장 지도`}
-            src={mapUrls[mapEngine]}
+            title={`${title} 현장 지도`}
+            src={mapEmbedUrl}
             width="100%"
             height="100%"
             style={{ border: 0 }}
@@ -178,34 +145,6 @@ export function ApartmentHighlightsAndMap({
             referrerPolicy="no-referrer-when-downgrade"
             className="w-full h-full"
           />
-        </div>
-
-        {/* 하단 외부 연결 1클릭 버튼 및 안내 */}
-        <div className="p-3 bg-slate-50/70 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-slate-500 text-[11px]">
-            💡 상단 탭에서 <strong>네이버 지도 / 카카오 맵 / 구글 지도</strong> 엔진을 자유롭게 전환하여 탐색할 수 있습니다.
-          </span>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={naverMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
-            >
-              <span>네이버 앱 크게 보기</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
-            <a
-              href={kakaoMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
-            >
-              <span>카카오 맵 크게 보기</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
         </div>
       </div>
     </div>
