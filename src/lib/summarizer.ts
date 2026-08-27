@@ -12,7 +12,8 @@ export interface NewsletterContent {
 
 // 1. 개별 아파트 물건(단지)별 심층 분석 블로그 아티클 생성기
 export async function generateApartmentPost(
-  apt: ApartmentData
+  apt: ApartmentData,
+  pdfText?: string
 ): Promise<NewsletterContent> {
   const apiKey = process.env.OPENAI_API_KEY;
   const todayStr = format(new Date(), 'yyyy년 M월 d일', { locale: ko });
@@ -124,8 +125,10 @@ ${typesDetailedText || '단일 평형'}
 [오늘 날짜]: ${todayStr}
 [분양 단지 정밀 데이터]:
 ${aptDetails}
+${pdfText ? `\n[모집공고문 원본 추출 텍스트 (참고용)]:\n${pdfText}\n` : ''}
 
 위 데이터를 바탕으로 평형별 분양 세대수와 [2026년 8월 기준 LTV 및 가격대별 절대한도 이중 규제가 적용된 평형별 개별 자금 조달 시뮬레이션 표]가 담긴 최고 수준의 블로그 리포트를 작성해 주세요.
+${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼꼼히 분석하여 1. 청약자격, 2. 제한사항(전매제한, 실거주의무 등), 3. 정확한 분양가 및 납부일정을 반드시 포함하세요.' : ''}
 `;
 
       const response = await openai.chat.completions.create({

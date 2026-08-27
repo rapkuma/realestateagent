@@ -3,6 +3,7 @@ dotenv.config({ path: '.env.local' });
 
 import { format } from 'date-fns';
 import { generateApartmentPost } from '../src/lib/summarizer';
+import { downloadAndParsePdf } from '../src/lib/pdfDownloader';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -99,10 +100,22 @@ async function processActiveAndUpcoming() {
       announcement_date: formatDateStr(item.RCRIT_PBLANC_DE || item.PBLANC_NO),
       winner_date: formatDateStr(item.PRTCN_PW_BB_DE),
       contract_date: formatDateStr(item.CNTRCT_CNCLS_BGNDE),
+      house_manage_no: item.HOUSE_MANAGE_NO || item.house_manage_no,
+      pblanc_no: item.PBLANC_NO || item.pblanc_no,
     };
 
     try {
-      const generated = await generateApartmentPost(aptData as any);
+      const houseManageNo = item.HOUSE_MANAGE_NO || item.house_manage_no;
+      const pblancNo = item.PBLANC_NO || item.pblanc_no;
+      
+      let pdfText = '';
+      if (houseManageNo && pblancNo) {
+        console.log(`📑 모집공고문 PDF 다운로드 및 텍스트 추출 시도: ${houseManageNo}`);
+        const extracted = await downloadAndParsePdf(houseManageNo, pblancNo);
+        if (extracted) pdfText = extracted;
+      }
+      
+      const generated = await generateApartmentPost(aptData as any, pdfText);
 
       const { data: existing } = await supabase
         .from('newsletters')
