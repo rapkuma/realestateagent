@@ -106,7 +106,10 @@ export default async function Home() {
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto px-4 space-y-2">
           <p>© {new Date().getFullYear()} 집모아 (ZipMoa) - AI 부동산 분양 정보 자동화 서비스</p>
-          <p>데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 연동: 네이버 지도</p>
+          <p className="text-slate-500 font-medium">
+            도즈소프트 | 대표: 김인중 | 사업자등록번호: 402-20-88549 | 이메일: dozesoft@gmail.com
+          </p>
+          <p className="text-slate-400">데이터 출처: 한국부동산원 청약홈 공공데이터 · 위치 연동: 네이버 지도</p>
         </div>
       </footer>
     </main>
