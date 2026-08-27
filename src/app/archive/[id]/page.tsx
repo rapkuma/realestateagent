@@ -17,6 +17,7 @@ import { ko } from 'date-fns/locale';
 import { Metadata } from 'next';
 import { generateNewsArticleJsonLd, generateFAQPageJsonLd } from '@/lib/jsonld';
 import { ReportArticleViewer } from './ReportArticleViewer';
+import { ApartmentHighlightsAndMap } from './ApartmentHighlightsAndMap';
 
 export const dynamic = 'force-dynamic';
 
@@ -159,6 +160,14 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
               한국부동산원 청약홈 공식 데이터와 네이버 지도를 기반으로 자금 시뮬레이션 및 4대 입지를 심층 분석한 리포트입니다.
             </p>
           </div>
+
+          {/* 💰 평형 & 금액 강조 카드 + 🗺️ 실시간 지도 미리보기 */}
+          <ApartmentHighlightsAndMap
+            title={newsletter.title}
+            contentHtml={newsletter.content_html}
+            locationText={locationText}
+            naverMapUrl={naverMapUrl}
+          />
 
           {/* Legal Disclaimer Warning Banner (Top) */}
           <div className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900 leading-relaxed shadow-sm">
