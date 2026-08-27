@@ -20,11 +20,13 @@ interface NewsletterEmailProps {
 }
 
 export const NewsletterEmail = ({
-  title = '[청약 헬퍼] 주간 핵심 청약 브리핑',
-  summaryText = '한국부동산원 청약홈 데이터를 기반으로 한 AI 요약 청약 정보입니다.',
+  title = '[집모아] 아파트 & 줍줍 심층 청약 분석 리포트',
+  summaryText = '한국부동산원 청약홈 데이터를 기반으로 한 AI 심층 분석 청약 정보입니다.',
   contentHtml = '<p>청약 정보 내용</p>',
   dateStr = new Date().toLocaleDateString('ko-KR'),
 }: NewsletterEmailProps) => {
+  const siteUrl = 'https://realestateagent-12hc.vercel.app';
+
   return (
     <Html lang="ko">
       <Head />
@@ -33,9 +35,13 @@ export const NewsletterEmail = ({
         <Container style={container}>
           {/* Header */}
           <Section style={headerSection}>
-            <Text style={badgeText}>실시간 청약 정보 서비스</Text>
-            <Heading style={headerTitle}>🏢 청약 헬퍼 뉴스레터</Heading>
-            <Text style={headerDate}>{dateStr} 발행</Text>
+            <Text style={badgeText}>⚡ 실시간 청약홈 연동 & AI 분석</Text>
+            <Heading style={headerTitle}>
+              <Link href={siteUrl} style={headerTitleLink}>
+                🏠 집모아 (ZipMoa)
+              </Link>
+            </Heading>
+            <Text style={headerDate}>{dateStr} 리포트</Text>
           </Section>
 
           <Hr style={divider} />
@@ -47,15 +53,29 @@ export const NewsletterEmail = ({
             </Heading>
             {summaryText && (
               <Text style={summaryParagraph}>
-                💡 <strong>핵심 브리핑</strong>: {summaryText}
+                💡 <strong>핵심 요약</strong>: {summaryText}
               </Text>
             )}
+
+            {/* Direct Homepage Link CTA Button */}
+            <div style={ctaButtonContainer}>
+              <Link href={siteUrl} style={ctaButton}>
+                🏠 집모아 메인 홈페이지에서 실시간 리포트 보기 →
+              </Link>
+            </div>
 
             {/* Newsletter Dynamic HTML Content */}
             <div
               style={bodyContent}
               dangerouslySetInnerHTML={{ __html: contentHtml }}
             />
+
+            {/* Bottom Homepage Link CTA Button */}
+            <div style={ctaButtonContainer}>
+              <Link href={siteUrl} style={ctaButton}>
+                🌐 집모아 메인 홈페이지 바로가기 (전국 청약 조회) →
+              </Link>
+            </div>
           </Section>
 
           <Hr style={divider} />
@@ -63,15 +83,22 @@ export const NewsletterEmail = ({
           {/* Footer */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              본 메일은 청약 헬퍼 뉴스레터를 구독하신 분들께 발송되는 정기 청약 소식지입니다.
+              본 메일은 집모아 (ZipMoa) 청약 서비스를 이용해 주시는 분들께 발송되는 정기 청약 소식지입니다.
             </Text>
             <Text style={footerLinks}>
+              <Link href={siteUrl} style={footerLink}>
+                🏠 집모아 메인 홈페이지
+              </Link>
+              {' · '}
               <Link href="https://www.applyhome.co.kr" style={footerLink}>
-                한국부동산원 청약홈 바로가기
+                한국부동산원 청약홈
               </Link>
             </Text>
+            <Text style={companyText}>
+              도즈소프트 | 대표: 김인중 | 사업자등록번호: 402-20-88549 | 이메일: dozesoft@gmail.com
+            </Text>
             <Text style={copyrightText}>
-              © {new Date().getFullYear()} 청약 헬퍼 (RealEstateAgent). All rights reserved.
+              © {new Date().getFullYear()} 집모아 (ZipMoa). All rights reserved.
             </Text>
           </Section>
         </Container>
@@ -108,11 +135,11 @@ const headerSection = {
 const badgeText = {
   display: 'inline-block',
   padding: '4px 12px',
-  backgroundColor: '#f1f5f9',
-  color: '#0f172a',
+  backgroundColor: '#eff6ff',
+  color: '#2563eb',
   borderRadius: '20px',
   fontSize: '12px',
-  fontWeight: '600',
+  fontWeight: '700',
   margin: '0 0 10px 0',
 };
 
@@ -122,6 +149,11 @@ const headerTitle = {
   color: '#0f172a',
   margin: '0 0 6px 0',
   letterSpacing: '-0.5px',
+};
+
+const headerTitleLink = {
+  color: '#0f172a',
+  textDecoration: 'none',
 };
 
 const headerDate = {
@@ -155,7 +187,24 @@ const summaryParagraph = {
   padding: '12px 16px',
   borderRadius: '8px',
   borderLeft: '4px solid #3b82f6',
-  marginBottom: '24px',
+  marginBottom: '20px',
+};
+
+const ctaButtonContainer = {
+  textAlign: 'center' as const,
+  margin: '20px 0',
+};
+
+const ctaButton = {
+  display: 'inline-block',
+  backgroundColor: '#2563eb',
+  color: '#ffffff',
+  padding: '12px 24px',
+  borderRadius: '10px',
+  fontWeight: '700',
+  fontSize: '14px',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
 };
 
 const bodyContent = {
@@ -179,12 +228,19 @@ const footerText = {
 const footerLinks = {
   fontSize: '12px',
   color: '#64748b',
-  margin: '0 0 12px 0',
+  margin: '0 0 10px 0',
 };
 
 const footerLink = {
   color: '#2563eb',
   textDecoration: 'underline',
+  fontWeight: '600',
+};
+
+const companyText = {
+  fontSize: '11px',
+  color: '#64748b',
+  margin: '0 0 6px 0',
 };
 
 const copyrightText = {
