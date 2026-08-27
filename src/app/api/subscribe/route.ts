@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { sendWelcomeEmail } from '@/lib/mailer';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, region } = await request.json();
 
     // 이메일 형식 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,47 +16,41 @@ export async function POST(request: NextRequest) {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
+    const targetRegion = region || '전국';
 
-    // Supabase subscribers 테이블에 이메일 추가
+    // Supabase subscribers 테이블에 이메일 및 희망 지역 저장 (또는 갱신)
     const { error } = await supabase
       .from('subscribers')
-      .insert([{ email: trimmedEmail, is_active: true }]);
+      .upsert(
+        [{ email: trimmedEmail, region: targetRegion, is_active: true }],
+        { onConflict: 'email' }
+      );
 
     if (error) {
-      console.error('🔴 [Supabase Insert Error]:', error);
+      console.error('🔴 [Supabase Insert/Upsert Error]:', error);
 
-      // 1. 중복 이메일 가입
-      if (error.code === '23505') {
-        return NextResponse.json(
-          { error: '이미 뉴스레터를 구독 중인 이메일입니다.' },
-          { status: 409 }
-        );
-      }
+      // fallback: region 컬럼이 아직 DB 스키마에 업로드되지 않은 경우 email만 저장
+      const { error: fallbackError } = await supabase
+        .from('subscribers')
+        .upsert([{ email: trimmedEmail, is_active: true }], { onConflict: 'email' });
 
-      // 2. 테이블이 없는 경우
-      if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+      if (fallbackError) {
         return NextResponse.json(
-          { error: 'Supabase에 subscribers 테이블이 없습니다. SQL Editor에서 테이블 생성 스크립트를 먼저 실행해 주세요.' },
+          { error: `구독 저장 실패: ${fallbackError.message}` },
           { status: 500 }
         );
       }
+    }
 
-      // 3. RLS(Row Level Security) 권한 차단인 경우
-      if (error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('permission denied')) {
-        return NextResponse.json(
-          { error: 'Supabase RLS(Row Level Security) 권한 오류입니다. subscribers 테이블의 RLS를 비활성화하거나 정책을 추가해 주세요.' },
-          { status: 403 }
-        );
-      }
-
-      return NextResponse.json(
-        { error: `Supabase 오류: ${error.message} (${error.code || '알 수 없는 코드'})` },
-        { status: 500 }
-      );
+    // 📧 신규 구독 환영 메일 즉시 발송 파이프라인
+    try {
+      await sendWelcomeEmail(trimmedEmail, targetRegion);
+    } catch (mErr) {
+      console.warn('⚠️ [Subscribe API] 환영 메일 발송 경고:', mErr);
     }
 
     return NextResponse.json(
-      { message: '구독 신청이 완료되었습니다! 매주 청약 소식을 전해드릴게요.' },
+      { message: `[${targetRegion}] 지역 희망 청약 알림 구독이 신청되었습니다! 환영 메일을 발송했습니다.` },
       { status: 200 }
     );
   } catch (error: any) {

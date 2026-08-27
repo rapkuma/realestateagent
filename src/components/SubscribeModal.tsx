@@ -5,11 +5,12 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { Mail, Sparkles, X } from "lucide-react";
+import { Mail, Sparkles, X, MapPin, Bell } from "lucide-react";
 
 export function SubscribeModalButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [region, setRegion] = useState<string>("전국");
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -35,7 +36,7 @@ export function SubscribeModalButton() {
       const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, region }),
       });
 
       const data = await response.json();
@@ -78,17 +79,43 @@ export function SubscribeModalButton() {
             <Sparkles className="h-6 w-6" />
           </div>
           <h3 className="text-lg md:text-xl font-extrabold text-slate-900">
-            이메일 레터 무료 구독 (선택 기능)
+            이메일 레터 무료 구독
           </h3>
           <p className="text-xs text-slate-600 leading-relaxed max-w-xs mx-auto">
-            웹사이트 뉴스레터와 별도로, 매주 신규 청약 브리핑을 이메일로도 받고 싶으신 분들을 위한 알림 서비스입니다.
+            신규 청약 및 무순위 줍줍 공고 발생 시 실시간 이메일 브리핑을 보내드립니다.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Region Selector */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">
-              수신 이메일 주소
+            <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5 text-blue-600" />
+              <span>희망 수신 지역 선택</span>
+            </label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {["전국", "서울", "경기", "인천", "전북", "기타"].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRegion(r)}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                    region === r
+                      ? "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-600/20"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  {r === "전국" ? "🌐 전국" : `📍 ${r}`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Email Input */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+              <Mail className="h-3.5 w-3.5 text-blue-600" />
+              <span>수신 이메일 주소</span>
             </label>
             <div className="relative">
               <Input
@@ -97,7 +124,7 @@ export function SubscribeModalButton() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                className="pl-10 h-11 text-sm"
+                className="pl-10 h-11 text-sm font-medium"
               />
               <Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             </div>
@@ -106,15 +133,16 @@ export function SubscribeModalButton() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-11 font-bold text-sm bg-blue-600 hover:bg-blue-700 shadow-md"
+            className="w-full h-11 font-bold text-sm bg-blue-600 hover:bg-blue-700 shadow-md cursor-pointer"
           >
-            {isLoading ? "신청 처리 중..." : "무료 이메일 알림 신청"}
+            {isLoading ? "신청 처리 중..." : "🚀 무료 이메일 알림 신청"}
           </Button>
         </form>
 
-        <p className="text-[11px] text-center text-slate-400">
-          스팸 없이 언제든 클릭 한 번으로 수신 해제가 가능합니다.
-        </p>
+        <div className="flex items-start gap-1.5 bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-[11px] text-blue-900 leading-normal">
+          <Bell className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+          <span>선택하신 희망 지역의 신규 무순위(줍줍) 및 1순위 청약 공고 발생 시 즉시 전송해 드립니다.</span>
+        </div>
       </div>
     </div>
   ) : null;
@@ -123,7 +151,7 @@ export function SubscribeModalButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 font-bold text-xs md:text-sm shadow-md gap-1.5"
+        className="bg-blue-600 hover:bg-blue-700 font-bold text-xs md:text-sm shadow-md gap-1.5 cursor-pointer"
       >
         <Mail className="h-4 w-4" />
         <span>이메일 구독 (무료)</span>
