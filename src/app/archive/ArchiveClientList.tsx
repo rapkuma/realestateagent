@@ -444,17 +444,17 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                     {isToday ? (
                       <span className="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-sm animate-pulse shrink-0">
                         <Sparkles className="h-3.5 w-3.5 fill-white" />
-                        <span>🔥 오늘 접수중! ({item.applyDateStr || '오늘'})</span>
+                        <span>🔥 오늘청약: {item.applyDateStr || '오늘'}</span>
                       </span>
                     ) : isEnded ? (
                       <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-200/90 text-slate-600 border border-slate-300 shrink-0">
                         <Lock className="h-3.5 w-3.5 text-slate-500" />
-                        <span>마감 ({item.applyDateStr || '과거'})</span>
+                        <span>청약마감: {item.applyDateStr || '과거'}</span>
                       </span>
                     ) : (
                       <div className="flex items-center gap-1 text-xs font-black text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg border border-blue-300/80 shrink-0 shadow-xs">
                         <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                        <span>🗓️ 청약일: {item.applyDateStr || '접수예정'}</span>
+                        <span>📅 청약예정: {item.applyDateStr || '일정참조'}</span>
                       </div>
                     )}
                   </div>
