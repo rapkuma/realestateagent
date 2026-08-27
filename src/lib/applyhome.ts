@@ -95,8 +95,8 @@ export async function fetchAndSyncApartments(): Promise<ApartmentData[]> {
     try {
       console.log('📡 [ApplyHome] 공공데이터포털 청약홈 API (APT + 무순위 줍줍) 호출 시도...');
       
-      const aptUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail?page=1&perPage=40&serviceKey=${encodeURIComponent(apiKey)}`;
-      const remndrUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getRemndrLttotPblancDetail?page=1&perPage=40&serviceKey=${encodeURIComponent(apiKey)}`;
+      const aptUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail?page=1&perPage=300&serviceKey=${encodeURIComponent(apiKey)}`;
+      const remndrUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getRemndrLttotPblancDetail?page=1&perPage=300&serviceKey=${encodeURIComponent(apiKey)}`;
 
       const [resApt, resRemndr] = await Promise.all([
         fetch(aptUrl, { headers: { Accept: 'application/json' }, next: { revalidate: 3600 } }),

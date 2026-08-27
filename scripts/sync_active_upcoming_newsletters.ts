@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-import { format, parseISO, isBefore } from 'date-fns';
+import { format } from 'date-fns';
 import { generateApartmentPost } from '../src/lib/summarizer';
 import { createClient } from '@supabase/supabase-js';
 
@@ -20,6 +20,33 @@ function formatDateStr(dateStr: any): string {
   return s;
 }
 
+async function fetchAllPages(endpointName: string): Promise<any[]> {
+  let allItems: any[] = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore && page <= 5) {
+    const url = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/${endpointName}?page=${page}&perPage=100&serviceKey=${encodeURIComponent(apiKey || '')}`;
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) break;
+      const json = await res.json();
+      const items = json.data || [];
+      if (items.length === 0) {
+        hasMore = false;
+      } else {
+        allItems.push(...items);
+        if (items.length < 100) hasMore = false;
+        else page++;
+      }
+    } catch {
+      hasMore = false;
+    }
+  }
+
+  return allItems;
+}
+
 async function processActiveAndUpcoming() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   console.log(`🚀 [청약 접수일 유효건 전용 AI 분석 파이프라인 가동] (오늘 기준: ${todayStr})`);
@@ -29,35 +56,22 @@ async function processActiveAndUpcoming() {
     return;
   }
 
-  // 1. 공공데이터 API 호출
-  const aptUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail?page=1&perPage=100&serviceKey=${encodeURIComponent(apiKey)}`;
-  const remndrUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getRemndrLttotPblancDetail?page=1&perPage=100&serviceKey=${encodeURIComponent(apiKey)}`;
-  const urbntyUrl = `https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getUrbntyLttotPblancDetail?page=1&perPage=100&serviceKey=${encodeURIComponent(apiKey)}`;
-
-  const [resApt, resRemndr, resUrbnty] = await Promise.all([
-    fetch(aptUrl, { headers: { Accept: 'application/json' } }),
-    fetch(remndrUrl, { headers: { Accept: 'application/json' } }),
-    fetch(urbntyUrl, { headers: { Accept: 'application/json' } }),
-  ]);
-
-  const jsonApt = resApt.ok ? await resApt.json() : { data: [] };
-  const jsonRemndr = resRemndr.ok ? await resRemndr.json() : { data: [] };
-  const jsonUrbnty = resUrbnty.ok ? await resUrbnty.json() : { data: [] };
+  // 1. 공공데이터 API 전수 수집 (전체 페이지)
+  const aptItems = await fetchAllPages('getAPTLttotPblancDetail');
+  const remndrItems = await fetchAllPages('getRemndrLttotPblancDetail');
 
   const rawList: any[] = [
-    ...(jsonApt.data || []).map((i: any) => ({ ...i, _supplyType: '민영/공공주택' })),
-    ...(jsonRemndr.data || []).map((i: any) => ({ ...i, _supplyType: '무순위 (줍줍)' })),
-    ...(jsonUrbnty.data || []).map((i: any) => ({ ...i, _supplyType: '오피스텔/도시형' })),
+    ...aptItems.map((i: any) => ({ ...i, _supplyType: '민영/공공주택' })),
+    ...remndrItems.map((i: any) => ({ ...i, _supplyType: '무순위 (줍줍)' })),
   ];
 
-  console.log(`📡 공공데이터포털 수신 총 ${rawList.length}건`);
+  console.log(`📡 공공데이터포털 수신 총 ${rawList.length}건 (APT: ${aptItems.length}건 / 무순위: ${remndrItems.length}건)`);
 
   // 2. 청약 접수일 지난 것 제외 (apply_date >= todayStr)
   const activeItems = rawList.filter((item) => {
     const rawApply = item.RCEPT_BGNDE || item.SUBSCRPT_RCEPT_BGNDE || item.subscrpt_rcept_bgnde || item.rcept_bgnde || '';
     const applyDate = formatDateStr(rawApply);
     if (!applyDate) return false;
-    // 접수일이 오늘보다 전(과거)이면 제외!
     return applyDate >= todayStr;
   });
 
@@ -83,14 +97,13 @@ async function processActiveAndUpcoming() {
       supply_type: item._supplyType,
       builder: item.BSNS_MBY_NM || '주요 건설사',
       announcement_date: formatDateStr(item.RCRIT_PBLANC_DE || item.PBLANC_NO),
-      winner_date: formatDateStr(item.PRTCN_PW_BB_DE || item.PRTCN_PW_BB_DE),
+      winner_date: formatDateStr(item.PRTCN_PW_BB_DE),
       contract_date: formatDateStr(item.CNTRCT_CNCLS_BGNDE),
     };
 
     try {
       const generated = await generateApartmentPost(aptData as any);
 
-      // Supabase newsletters 업서트
       const { data: existing } = await supabase
         .from('newsletters')
         .select('id')
