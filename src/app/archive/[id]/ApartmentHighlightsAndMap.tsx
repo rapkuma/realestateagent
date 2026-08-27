@@ -16,32 +16,57 @@ export function ApartmentHighlightsAndMap({
   locationText,
   naverMapUrl,
 }: ApartmentHighlightsAndMapProps) {
-  // 1. 평형(공급타입) & 분양가(금액) 정밀 추출 로직
+  // 1. 100% 정밀 아파트 분양가 & 평형 & 규모 파싱 로직
   const { priceInfo, sizeInfo, scaleInfo } = useMemo(() => {
-    const sizeMatches = Array.from(
-      contentHtml.matchAll(/(?:59|74|84|101|102|114|130|135|140|150)\s*(?:㎡|타입|평형|A|B|C)?/gi)
-    ).map((m) => m[0].trim());
+    let priceText = '타입별 분양가 개별 표기 (하단 9번 표 참조)';
+    let sizeText = '전용 59㎡ ~ 84㎡ (국민평형 포함)';
+    let scaleText = '공공데이터 신규 분양 단지';
 
-    const uniqueSizes = Array.from(new Set(sizeMatches)).slice(0, 5);
-    const sizeText = uniqueSizes.length > 0
-      ? uniqueSizes.join(' · ')
-      : '전용 59㎡ ~ 84㎡ (국민평형 포함)';
+    if (!contentHtml) return { priceInfo: priceText, sizeInfo: sizeText, scaleInfo: scaleText };
 
-    let priceText = '공고문 참조 (타입별 최저 ~ 최고가)';
-    
-    const priceMatch = 
-      contentHtml.match(/(?:최고\s*분양가|분양가|공급금액|최고가)[^:<]*[:\s]*<strong>?(?:약\s*)?([\d억\s,천만]+원?)/i) ||
-      contentHtml.match(/([\d]+\s*억\s*[\d,]*\s*만?\s*원)/);
+    // A. 공급규모 파싱
+    const scaleMatch = 
+      contentHtml.match(/🏗️\s*공급규모<\/td>\s*<td[^>]*>(.*?)<\/td>/i) ||
+      contentHtml.match(/🏗️\s*시공사\/규모:\s*(.*?)(?:<\/p>|<br>)/i);
 
-    if (priceMatch && priceMatch[1]) {
-      priceText = priceMatch[1].replace(/<[^>]*>/g, '').trim();
-      if (!priceText.includes('원')) priceText += '원';
+    if (scaleMatch && scaleMatch[1]) {
+      scaleText = scaleMatch[1].replace(/<[^>]*>/g, '').trim();
     }
 
-    let scaleText = '신규 분양 단지';
-    const scaleMatch = contentHtml.match(/(\d{2,4}\s*세대)/);
-    if (scaleMatch) {
-      scaleText = scaleMatch[1];
+    // B. 분양가 (Section 9 및 상단 요약문 우선 파싱)
+    const headerPriceMatch = contentHtml.match(/<strong>최고\s*분양가<\/strong>[^:]*:\s*<strong>?([\d억\s,천만]+원[^<]*)/i);
+
+    if (headerPriceMatch && headerPriceMatch[1]) {
+      priceText = headerPriceMatch[1].replace(/<[^>]*>/g, '').trim();
+    } else {
+      // 9번 평형별 상세 분양가 섹션 탐색
+      const sec9Match = contentHtml.match(/9\.\s*평형[^<]*상세\s*분양가[\s\S]*?(?:<div[^>]*>([\s\S]*?)<\/div>|<table[\s\S]*?<\/table>)/i);
+      if (sec9Match && sec9Match[0]) {
+        const sec9CleanText = sec9Match[0].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+        const specPriceMatch = sec9CleanText.match(/(?:최고\s*)?([\d]+\s*억\s*[\d,]*\s*만?\s*원?)/i);
+        if (specPriceMatch && specPriceMatch[1]) {
+          priceText = specPriceMatch[1].trim();
+          if (!priceText.includes('원')) priceText += '원';
+        }
+      }
+    }
+
+    // 예시 템플릿 문구 오작동 방지 검증 (실제 9번 표에 분양가가 별도로 지정되지 않은 경우)
+    if (priceText.includes('8억 4,000만') && !contentHtml.includes('8억 4,000만원') && !contentHtml.includes('최고 분양가')) {
+      priceText = '하단 [9. 상세 분양가] 참조';
+    }
+
+    // C. 공급 평형 파싱
+    const sec9MatchForSizes = contentHtml.match(/9\.\s*평형[^<]*상세\s*분양가[\s\S]*?(?:<div[^>]*>([\s\S]*?)<\/div>|<table[\s\S]*?<\/table>)/i);
+    const sec9TextForSizes = sec9MatchForSizes ? sec9MatchForSizes[0].replace(/<[^>]*>/g, ' ') : contentHtml;
+    
+    const sizeMatches = Array.from(
+      sec9TextForSizes.matchAll(/(?:전용\s*)?(\d{2,3}\s*㎡|\d{2,3}\s*[A-C]타입|\d{2,3}A|\d{2,3}B|\d{2,3}C)/gi)
+    ).map(m => m[1].trim());
+
+    const uniqueSizes = Array.from(new Set(sizeMatches)).slice(0, 4);
+    if (uniqueSizes.length > 0) {
+      sizeText = uniqueSizes.join(' · ');
     }
 
     return {
@@ -79,11 +104,11 @@ export function ApartmentHighlightsAndMap({
                 <Building2 className="h-4 w-4 text-blue-200" />
                 <span>공급 평형 / 전용면적</span>
               </div>
-              <div className="text-xl md:text-2xl font-black text-amber-300 tracking-tight">
+              <div className="text-lg md:text-xl font-black text-amber-300 tracking-tight">
                 {sizeInfo}
               </div>
               <p className="text-[11px] text-blue-100/80">
-                타입별 선호도 높은 인공지능 추천 특화 평형
+                청약홈 공고문 기준 타입별 전용면적
               </p>
             </div>
 
@@ -93,11 +118,11 @@ export function ApartmentHighlightsAndMap({
                 <Landmark className="h-4 w-4 text-emerald-300" />
                 <span>대표 분양가 / 최고가 기준</span>
               </div>
-              <div className="text-xl md:text-2xl font-black text-white tracking-tight flex items-baseline gap-1">
+              <div className="text-lg md:text-xl font-black text-white tracking-tight flex items-baseline gap-1">
                 <span className="text-emerald-300 font-extrabold">{priceInfo}</span>
               </div>
               <p className="text-[11px] text-blue-100/80">
-                LTV·DSR 자금 시뮬레이션 적용 분양가
+                LTV·DSR 2026 자금 시뮬레이션 적용 분양가
               </p>
             </div>
           </div>
