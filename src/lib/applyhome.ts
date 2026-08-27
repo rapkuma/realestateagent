@@ -118,8 +118,17 @@ export async function fetchAndSyncApartments(): Promise<ApartmentData[]> {
       const normalizedApt = normalizeItems(aptItems);
       const normalizedRemndr = normalizeItems(remndrItems).map(i => ({ ...i, supply_type: '무순위 (줍줍)' }));
 
-      rawList = [...normalizedApt, ...normalizedRemndr];
-      console.log(`✅ [ApplyHome] API 수신 완료: APT ${normalizedApt.length}건 / 무순위 줍줍 ${normalizedRemndr.length}건 (합계 ${rawList.length}건)`);
+      // 🌐 0초 실시간 청약홈 웹 스크레이퍼 결합 (OpenAPI 지연 100% 극복)
+      let webScraperItems: ApartmentData[] = [];
+      try {
+        const { fetchApplyHomeWebScraper } = await import('./applyhomeWebScraper');
+        webScraperItems = await fetchApplyHomeWebScraper();
+      } catch (wErr) {
+        console.warn('⚠️ 웹 스크레이퍼 병합 중 예외:', wErr);
+      }
+
+      rawList = [...normalizedApt, ...normalizedRemndr, ...webScraperItems];
+      console.log(`✅ [ApplyHome] 실시간 수신 완료: APT ${normalizedApt.length}건 / 무순위 ${normalizedRemndr.length}건 / 웹 스크레이퍼 ${webScraperItems.length}건 (합계 ${rawList.length}건)`);
     } catch (err) {
       console.error('❌ [ApplyHome] API 호출 중 예외 발생: Fallback 데이터를 사용합니다.', err);
       rawList = getMockApartments();
