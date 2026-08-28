@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { ApartmentData, TypeDetail, FinancingDetail } from '@/lib/applyhome';
+import { extractDataFromPdfText, ExtractedPdfData } from '@/lib/pdfExtractor';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -19,6 +20,12 @@ export async function generateApartmentPost(
   const apiKey = process.env.OPENAI_API_KEY;
   const todayStr = format(new Date(), 'yyyy년 M월 d일', { locale: ko });
   const naverMapUrl = `https://map.naver.com/p/search/${encodeURIComponent(apt.location || apt.apt_name)}`;
+
+  // PDF 텍스트에서 타입 및 분양가, 규제정보 직접 추출
+  const extractedPdf = pdfText ? extractDataFromPdfText(pdfText, apt.location) : null;
+  if (extractedPdf && extractedPdf.types_detail.length > 0 && (!apt.types_detail || apt.types_detail.length === 0)) {
+    apt.types_detail = extractedPdf.types_detail;
+  }
 
   const title = `[${apt.apt_name}] ${apt.supply_type || '청약 줍줍'} 심층 분석 리포트`;
 
@@ -186,7 +193,7 @@ ${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼�
     }
   }
 
-  return generateSingleAptFallback(apt, todayStr, pdfUrl);
+  return generateSingleAptFallback(apt, todayStr, pdfUrl, extractedPdf);
 }
 
 // 2. 전체 단지 종합 브리핑 뉴스레터 생성기
@@ -271,7 +278,8 @@ export async function generateNewsletterSummary(
 function generateSingleAptFallback(
   apt: ApartmentData,
   todayStr: string,
-  pdfUrl?: string
+  pdfUrl?: string,
+  extractedPdf?: ExtractedPdfData | null
 ): NewsletterContent {
   const pdfButtonHtml = pdfUrl 
     ? `<a href="${pdfUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background-color: #2563eb; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">📄 공식 입주자모집공고문 다운로드 (PDF)</a>` 
@@ -502,11 +510,12 @@ function generateSingleAptFallback(
       <div style="margin-bottom: 25px;">
         <h3 style="font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">13~20. 종합 분석 및 청약자격 / 대출전략</h3>
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; font-size: 14px; color: #334155; line-height: 1.8;">
-          • <strong>청약자격:</strong> 모집공고일 기준 거주자 및 무주택 세대구성원 요건 확인<br>
-          • <strong>제한사항:</strong> 전매제한 및 재당첨 제한 여부 공고문 최종 점검<br>
-          • <strong>대출조건:</strong> 2026년 8월 기준 주택가격별 절대 대출한도(15억 이하 최대 6억) 적용<br>
-          • <strong>추첨제 물량 & 전략:</strong> 가점제/추첨제 비율에 맞춘 전략적 타입 선택 권장<br>
-          • <strong>주의사항:</strong> 당첨 시 계약금(10~20%) 자가자금(현금) 준비 필수
+          • <strong>청약자격:</strong> ${extractedPdf?.qualifications ? extractedPdf.qualifications.join(' · ') : '모집공고일 기준 거주자 및 무주택 세대구성원 요건 확인'}<br>
+          • <strong>전매제한:</strong> <span style="color: #b91c1c; font-weight: 700;">${extractedPdf?.restrictions?.resale_restriction || '공고문 확인 필수'}</span><br>
+          • <strong>실거주의무:</strong> <span style="color: #1e40af; font-weight: 700;">${extractedPdf?.restrictions?.residence_obligation || '해당 없음 (공고문 참조)'}</span><br>
+          • <strong>재당첨제한:</strong> ${extractedPdf?.restrictions?.reapplication_restriction || '규제지역 및 분양가상한제 적용 여부에 따름'}<br>
+          • <strong>2026.8 대출규제:</strong> 주택가격별 절대 대출한도(15억 이하 최대 6억, 15~25억 최대 4억) Min(LTV, 절대한도) 이중 규제 적용<br>
+          • <strong>자금전략:</strong> 당첨 시 계약금(10~20%) 자가자금(현금) 준비 및 잔금 납부 시점 대출 실행 계획 수립 필수
         </div>
       </div>
       <div style="background-color: #f1f5f9; border-radius: 14px; padding: 22px; margin-bottom: 20px;">

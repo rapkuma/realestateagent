@@ -22,6 +22,7 @@ import {
   Lock,
   Search,
   X,
+  FileText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -487,6 +488,11 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
             const isToday = status === 'TODAY';
             const isEnded = status === 'ENDED';
 
+            // PDF 첨부 여부 및 URL 추출
+            const pdfMatch = item.content_html.match(/https?:\/\/(?:www\.|static\.)?applyhome\.co\.kr\/ai\/aia\/getAtchmnfl\.do\?[^"']*/i);
+            const pdfUrl = pdfMatch ? pdfMatch[0].replace(/&amp;/g, '&') : null;
+            const hasPdf = !!pdfUrl || item.content_html.includes('getAtchmnfl.do') || item.content_html.includes('모집공고문 다운로드');
+
             return (
               <Card
                 key={item.id}
@@ -501,10 +507,18 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                 <CardHeader className="p-5 space-y-3">
                   {/* Top Row: Region Badge (Left) + Status / Date (Right) */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-0.5 rounded-md border ${regionColor} shadow-xs`}>
-                      <MapPin className="h-3 w-3" />
-                      {item.region}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-0.5 rounded-md border ${regionColor} shadow-xs`}>
+                        <MapPin className="h-3 w-3" />
+                        {item.region}
+                      </span>
+                      {hasPdf && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200/90 shadow-xs">
+                          <FileText className="h-3 w-3 text-rose-600" />
+                          <span>PDF 공고문</span>
+                        </span>
+                      )}
+                    </div>
 
                     {isToday ? (
                       <span className="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-sm animate-pulse shrink-0">
@@ -561,6 +575,18 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                     <MapPin className="h-3.5 w-3.5 text-blue-600" />
                     <span className="hidden sm:inline">지도</span>
                   </a>
+                  {pdfUrl && (
+                    <a
+                      href={pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors shrink-0 text-xs font-bold gap-1"
+                      title="모집공고문 원본 PDF 다운로드"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-rose-600" />
+                      <span className="hidden sm:inline">PDF</span>
+                    </a>
+                  )}
                   <Link href={`/archive/${item.id}`} className="flex-1">
                     <Button
                       variant="default"
