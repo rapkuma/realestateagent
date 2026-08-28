@@ -96,78 +96,83 @@ export function extractDataFromPdfText(pdfText: string, location: string = ''): 
     result.restrictions.reapplication_restriction = reappMatch[1].replace(/\s+/g, ' ').trim();
   }
 
-  // 4. 평형 및 분양가 파싱
-  const lines = pdfText.split('\n');
-  const typeMap = new Map<string, { type_name: string; area: string; prices: number[]; count: number }>();
-  let currentActiveType: string | null = null;
+  // 4. 공식 약식표기 주택형 (39A, 59A, 59B, 84A, 84B, 84C, 101A, 24E, 25C, 42A, 42B, 42C 등) 탐색
+  const foundTypeKeys = new Set<string>();
+  const letterTypes = pdfText.match(/([1-9]\d{1,2}[A-Z])/g);
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    // 1) 단독 헤더 라인 검사: "39A 4", "59A", "84B 10세대", "059.9801A" 등
-    const headerMatch = line.match(/^([0-1]?\d{2,3}[A-Z]?|\d{2,3}\.\d{2,4}[A-Z]?)(?:\s+\d+)?$/i);
-    if (headerMatch) {
-      let tName = headerMatch[1].trim();
-      if (tName.includes('.')) {
-        const numPart = parseInt(tName.split('.')[0], 10);
-        const charPart = tName.slice(-1).match(/[A-Z]/i) ? tName.slice(-1) : '';
-        tName = `${numPart}${charPart}`;
-      }
-      const numVal = parseInt(tName, 10);
-      if (numVal >= 10 && numVal <= 250) {
-        currentActiveType = tName;
+  if (letterTypes) {
+    for (const t of letterTypes) {
+      const num = parseInt(t, 10);
+      if (num >= 20 && num <= 180 && t.length <= 4) {
+        foundTypeKeys.add(t);
       }
     }
+  }
 
-    // 2) 인라인 타입 검사: "24E1동 3호 ...", "39A ...", "59B ..."
-    const inlineTypeMatch = line.match(/([1-9]\d{1,2}[A-Z]|[1-9]\d{1,2})/i);
-    let matchedType = currentActiveType;
-    if (inlineTypeMatch) {
-      let tName = inlineTypeMatch[1].trim();
-      const numVal = parseInt(tName, 10);
-      if (numVal >= 10 && numVal <= 250) {
-        matchedType = tName;
-      }
-    }
-
-    // 3) 금액 매칭: 콤마 포함 금액
-    const priceMatches = line.match(/([1-9]\d{1,2}(?:,\d{3}){2,3})/g);
-
-    if (matchedType && priceMatches && priceMatches.length > 0) {
-      const prices = priceMatches.map(parseKoreanWon).filter(p => p >= 50000000 && p <= 5000000000); // 5천만~50억
-      if (prices.length > 0) {
-        const maxPriceInLine = Math.max(...prices);
-        const areaStr = `${matchedType.replace(/[A-Z]/g, '')}㎡`;
-
-        if (!typeMap.has(matchedType)) {
-          typeMap.set(matchedType, {
-            type_name: matchedType,
-            area: areaStr,
-            prices: [maxPriceInLine],
-            count: 1
-          });
-        } else {
-          const entry = typeMap.get(matchedType)!;
-          entry.prices.push(maxPriceInLine);
-          entry.count += 1;
+  // 만약 영문 타입이 없다면 숫자+타입/형 패턴 탐색
+  if (foundTypeKeys.size === 0) {
+    const numTypes = pdfText.match(/([1-9]\d{1,2})(?=[타입형])/g);
+    if (numTypes) {
+      for (const t of numTypes) {
+        const num = parseInt(t, 10);
+        if (num >= 20 && num <= 180) {
+          foundTypeKeys.add(t);
         }
       }
     }
   }
 
-  // TypeMap을 TypeDetail 목록으로 변환
+  // 각 타입별 가격 매핑
+  const typeMap = new Map<string, { type_name: string; area: string; supply: number; prices: number[] }>();
+  const lines = pdfText.split('\n');
+  let currentActiveType: string | null = foundTypeKeys.size === 1 ? Array.from(foundTypeKeys)[0] : null;
+
+  for (const line of lines) {
+    // 라인에 특정 타입명이 명시된 경우
+    for (const tKey of foundTypeKeys) {
+      if (line.includes(tKey)) {
+        currentActiveType = tKey;
+        break;
+      }
+    }
+
+    // 금액 매칭: 콤마 포함 금액 (예: 695,600,000)
+    const priceMatches = line.match(/([1-9]\d{1,2}(?:,\d{3}){2,3})/g);
+    if (currentActiveType && foundTypeKeys.has(currentActiveType) && priceMatches && priceMatches.length > 0) {
+      const validPrices = priceMatches.map(parseKoreanWon).filter(p => p >= 50000000 && p <= 5000000000);
+      if (validPrices.length > 0) {
+        const maxPriceInLine = Math.max(...validPrices);
+        const areaStr = `${currentActiveType.replace(/[A-Z]/g, '')}㎡`;
+
+        if (!typeMap.has(currentActiveType)) {
+          typeMap.set(currentActiveType, {
+            type_name: currentActiveType,
+            area: areaStr,
+            supply: 1,
+            prices: [maxPriceInLine]
+          });
+        } else {
+          const entry = typeMap.get(currentActiveType)!;
+          entry.prices.push(maxPriceInLine);
+          entry.supply += 1;
+        }
+      }
+    }
+  }
+
+  // TypeDetail 목록으로 변환
   const typesDetail: TypeDetail[] = [];
-  for (const [tName, data] of typeMap.entries()) {
+  for (const [tKey, data] of typeMap.entries()) {
     const maxP = Math.max(...data.prices);
     const minP = Math.min(...data.prices);
     const financing = calculate2026Financing(maxP, location);
 
     typesDetail.push({
-      type_name: `${tName} 타입`,
+      type_name: `${tKey} 타입`,
       exclusive_area: data.area,
-      general_supply: Math.max(1, data.count),
+      general_supply: data.supply,
       special_supply: 0,
-      total_supply: Math.max(1, data.count),
+      total_supply: data.supply,
       price_max: formatKoreanWon(maxP),
       price_min: formatKoreanWon(minP),
       financing: financing
@@ -176,8 +181,8 @@ export function extractDataFromPdfText(pdfText: string, location: string = ''): 
 
   if (typesDetail.length > 0) {
     result.types_detail = typesDetail.sort((a, b) => {
-      const numA = parseInt(a.exclusive_area, 10) || 0;
-      const numB = parseInt(b.exclusive_area, 10) || 0;
+      const numA = parseFloat(a.exclusive_area) || 0;
+      const numB = parseFloat(b.exclusive_area) || 0;
       return numA - numB;
     });
   }
