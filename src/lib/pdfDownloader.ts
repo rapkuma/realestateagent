@@ -1,25 +1,37 @@
 const pdfParse = require('pdf-parse');
 
-export async function downloadAndParsePdf(houseManageNo: string, pblancNo: string): Promise<string | null> {
+export async function downloadAndParsePdf(houseManageNo: string, pblancNo: string): Promise<{ text: string; url: string } | null> {
   try {
-    const detailUrl = `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do`;
+    const urlsToTry = [
+      `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancDetailView.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancDetail.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectRemndrLttotPblancDetail.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectCnclLttotPblancDetail.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectUrbceLttotPblancDetail.do`,
+      `https://www.applyhome.co.kr/ai/aia/selectNtnidPblancDetail.do`
+    ];
     
     // 1. 상세 페이지 HTML을 가져와서 첨부파일 URL 추출
-    const res = await fetch(detailUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      },
-      body: `houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`
-    });
-    
-    if (!res.ok) {
-      console.warn(`[PDF Download] Failed to fetch detail page HTTP ${res.status}`);
-      return null;
+    let html = '';
+    for (const detailUrl of urlsToTry) {
+      const res = await fetch(detailUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        },
+        body: `houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`
+      });
+      
+      if (res.ok) {
+        html = await res.text();
+        const testRegex = /getAtchmnfl\.do\?/gi;
+        if (testRegex.test(html)) {
+          break; // Found the attachment link, no need to check other endpoints
+        }
+      }
     }
-    
-    const html = await res.text();
     
     // getAtchmnfl.do 패턴 추출 (PDF 첨부파일)
     // href="https://static.applyhome.co.kr/ai/aia/getAtchmnfl.do?houseManageNo=2026000372&pblancNo=2026000372&atchmnflSeqNo=1944101&atchmnflSn=7"
@@ -79,14 +91,14 @@ export async function downloadAndParsePdf(houseManageNo: string, pblancNo: strin
        if (startIndex !== -1) {
          // 발견한 인덱스보다 1000자 앞부터 시작 (앞부분 맥락 포함)
          const cropStart = Math.max(0, startIndex - 1000);
-         return fullText.substring(cropStart, cropStart + MAX_LENGTH);
+         return { text: fullText.substring(cropStart, cropStart + MAX_LENGTH), url: pdfUrl };
        }
        
        // 못 찾으면 그냥 처음부터
-       return fullText.substring(0, MAX_LENGTH);
+       return { text: fullText.substring(0, MAX_LENGTH), url: pdfUrl };
     }
     
-    return fullText;
+    return { text: fullText, url: pdfUrl };
     
   } catch (err: any) {
     console.error(`[PDF Download/Parse Error] ${err.message}`);

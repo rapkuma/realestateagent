@@ -3,8 +3,8 @@ dotenv.config({ path: '.env.local' });
 import { downloadAndParsePdf } from '../src/lib/pdfDownloader';
 
 async function test() {
-  const houseManageNo = '2026000372'; // 쌍용 더 플래티넘 서대문
-  const pblancNo = '2026000372';
+  const houseManageNo = '2026910221';
+  const pblancNo = '2026910221';
   
   console.log(`Testing PDF download and parse for ${houseManageNo}...`);
   const text = await downloadAndParsePdf(houseManageNo, pblancNo);

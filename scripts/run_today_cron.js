@@ -18,12 +18,16 @@ async function runTodayCollection() {
   for (const apt of todayApartments) {
     console.log(`🤖 AI 심층 분석 수행 중: ${apt.apt_name}`);
     let pdfText = '';
+    let pdfUrl = '';
     if (apt.house_manage_no && apt.pblanc_no) {
       console.log(`📑 모집공고문 PDF 다운로드 시도: ${apt.house_manage_no}`);
       const extracted = await downloadAndParsePdf(apt.house_manage_no, apt.pblanc_no);
-      if (extracted) pdfText = extracted;
+      if (extracted) {
+        pdfText = extracted.text;
+        pdfUrl = extracted.url;
+      }
     }
-    const post = await generateApartmentPost(apt, pdfText);
+    const post = await generateApartmentPost(apt, pdfText, pdfUrl);
 
     // DB에 동기화
     const { data: saved, error } = await supabase.from('newsletters').insert([

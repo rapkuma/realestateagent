@@ -3,6 +3,7 @@ dotenv.config({ path: '.env.local' });
 
 import { fetchAndSyncApartments } from '../src/lib/applyhome';
 import { generateApartmentPost } from '../src/lib/summarizer';
+import { downloadAndParsePdf } from '../src/lib/pdfDownloader';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -23,7 +24,18 @@ async function rebuildAll() {
     console.log(`📍 [한국부동산원 공식 주소]: ${apt.location}`);
     
     try {
-      const generated = await generateApartmentPost(apt);
+      let pdfText = '';
+      let pdfUrl = '';
+      if (apt.house_manage_no && apt.pblanc_no) {
+        console.log(`📑 모집공고문 PDF 다운로드 시도: ${apt.house_manage_no}`);
+        const extracted = await downloadAndParsePdf(apt.house_manage_no, apt.pblanc_no);
+        if (extracted) {
+          pdfText = extracted.text;
+          pdfUrl = extracted.url;
+        }
+      }
+      
+      const generated = await generateApartmentPost(apt, pdfText, pdfUrl);
 
       // 기존 항목 DB 업데이트 (id 또는 title로 검색)
       const { data: existing } = await supabase
