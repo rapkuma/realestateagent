@@ -505,45 +505,39 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                 }
               >
                 <CardHeader className="p-5 space-y-3">
-                  {/* Top Row: Region Badge (Left) + Status / Date (Right) */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-0.5 rounded-md border ${regionColor} shadow-xs`}>
+                  {/* Top Row: Region Badge & PDF Badge (Left) + Status / Date (Right) */}
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-lg border ${regionColor} shadow-xs`}>
                         <MapPin className="h-3 w-3" />
                         {item.region}
                       </span>
                       {hasPdf && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-black px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200/90 shadow-xs">
-                          <FileText className="h-3 w-3 text-rose-600" />
-                          <span>PDF 공고문</span>
+                        <span className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 shadow-xs">
+                          <FileText className="h-3.5 w-3.5 text-rose-600" />
+                          <span>PDF</span>
                         </span>
                       )}
                     </div>
 
-                    {isToday ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-sm animate-pulse shrink-0">
-                        <Sparkles className="h-3.5 w-3.5 fill-white" />
-                        <span>🔥 오늘청약: {item.applyDateStr || '오늘'}</span>
-                      </span>
-                    ) : isEnded ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-200/90 text-slate-600 border border-slate-300 shrink-0">
-                        <Lock className="h-3.5 w-3.5 text-slate-500" />
-                        <span>청약마감: {item.applyDateStr || '과거'}</span>
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-1 text-xs font-black text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg border border-blue-300/80 shrink-0 shadow-xs">
-                        <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                        <span>📅 청약예정: {item.applyDateStr || '일정참조'}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Second Row: Apt Name Tag */}
-                  <div>
-                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md max-w-full truncate border ${isToday ? 'bg-blue-100/80 text-blue-900 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
-                      <Tag className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{cleanAptName}</span>
-                    </span>
+                    <div className="shrink-0 text-right">
+                      {isToday ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-lg bg-gradient-to-r from-red-500 to-amber-500 text-white shadow-xs animate-pulse">
+                          <Sparkles className="h-3.5 w-3.5 fill-white" />
+                          <span>🔥 오늘 {item.applyDateStr ? item.applyDateStr.slice(5) : '접수'}</span>
+                        </span>
+                      ) : isEnded ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-200/90 text-slate-600 border border-slate-300">
+                          <Lock className="h-3.5 w-3.5 text-slate-500" />
+                          <span>마감 {item.applyDateStr ? item.applyDateStr.slice(5) : ''}</span>
+                        </span>
+                      ) : (
+                        <div className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 shadow-xs">
+                          <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                          <span>예정 {item.applyDateStr ? item.applyDateStr.slice(5) : ''}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title (Clickable Link to detail page) */}
@@ -565,26 +559,16 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                 </CardHeader>
 
                 <CardFooter className={`p-3 border-t flex items-center gap-2 ${isToday ? 'bg-blue-50/80 border-blue-200/80' : isEnded ? 'bg-slate-200/50 border-slate-300/60' : 'bg-slate-50/70 border-slate-100'}`}>
-                  <a
-                    href={naverMapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center p-2 rounded-lg bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0 text-xs font-bold gap-1"
-                    title="네이버 지도로 현장 위치 확인"
-                  >
-                    <MapPin className="h-3.5 w-3.5 text-blue-600" />
-                    <span className="hidden sm:inline">지도</span>
-                  </a>
                   {pdfUrl && (
                     <a
                       href={pdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors shrink-0 text-xs font-bold gap-1"
-                      title="모집공고문 원본 PDF 다운로드"
+                      className="inline-flex items-center justify-center px-3 h-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-xs transition-colors shrink-0 gap-1.5 shadow-xs"
+                      title="공식 모집공고문 원본 PDF 다운로드"
                     >
                       <FileText className="h-3.5 w-3.5 text-rose-600" />
-                      <span className="hidden sm:inline">PDF</span>
+                      <span>PDF 공고문</span>
                     </a>
                   )}
                   <Link href={`/archive/${item.id}`} className="flex-1">

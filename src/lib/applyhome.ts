@@ -21,6 +21,7 @@ export interface TypeDetail {
   special_supply: number;   // 특별공급 세대수
   total_supply: number;     // 해당 평형 총 세대수
   price_max: string;        // 최고 분양가 (예: 14억 5,000만원)
+  price_min?: string;       // 최저 분양가 (예: 13억 2,000만원)
   price_per_pyeong?: string;// 평당가 (예: 약 5,200만원/평)
   financing?: FinancingDetail; // 평형별 개별 자금조달 및 안전마진 정밀 계산
 }

@@ -11,9 +11,9 @@ async function test() {
   
   if (text) {
     console.log(`\n--- Extracted Text Preview (First 500 chars) ---`);
-    console.log(text.substring(0, 500));
+    console.log(text.text.substring(0, 500));
     console.log(`----------------------------------------------`);
-    console.log(`Total Length: ${text.length}`);
+    console.log(`Total Length: ${text.text.length}`);
   } else {
     console.error('Failed to get text');
   }
