@@ -60,13 +60,17 @@ async function processActiveAndUpcoming() {
   // 1. 공공데이터 API 전수 수집 (전체 페이지)
   const aptItems = await fetchAllPages('getAPTLttotPblancDetail');
   const remndrItems = await fetchAllPages('getRemndrLttotPblancDetail');
+  const urbntyItems = await fetchAllPages('getUrbntyLttotPblancDetail');
+  const cnclItems = await fetchAllPages('getCnclLttotPblancDetail');
 
   const rawList: any[] = [
     ...aptItems.map((i: any) => ({ ...i, _supplyType: '민영/공공주택' })),
     ...remndrItems.map((i: any) => ({ ...i, _supplyType: '무순위 (줍줍)' })),
+    ...urbntyItems.map((i: any) => ({ ...i, _supplyType: '오피스텔/도시형/민간임대' })),
+    ...cnclItems.map((i: any) => ({ ...i, _supplyType: '취소후재공급' })),
   ];
 
-  console.log(`📡 공공데이터포털 수신 총 ${rawList.length}건 (APT: ${aptItems.length}건 / 무순위: ${remndrItems.length}건)`);
+  console.log(`📡 공공데이터포털 수신 총 ${rawList.length}건 (APT: ${aptItems.length}건 / 무순위: ${remndrItems.length}건 / 오피스텔: ${urbntyItems.length}건 / 취소후재공급: ${cnclItems.length}건)`);
 
   // 2. 청약 접수일 지난 것 제외 (apply_date >= todayStr)
   const activeItems = rawList.filter((item) => {
@@ -109,13 +113,17 @@ async function processActiveAndUpcoming() {
       const pblancNo = item.PBLANC_NO || item.pblanc_no;
       
       let pdfText = '';
+      let pdfUrl = '';
       if (houseManageNo && pblancNo) {
         console.log(`📑 모집공고문 PDF 다운로드 및 텍스트 추출 시도: ${houseManageNo}`);
         const extracted = await downloadAndParsePdf(houseManageNo, pblancNo);
-        if (extracted) pdfText = extracted;
+        if (extracted) {
+          pdfText = extracted.text;
+          pdfUrl = extracted.url;
+        }
       }
       
-      const generated = await generateApartmentPost(aptData as any, pdfText);
+      const generated = await generateApartmentPost(aptData as any, pdfText, pdfUrl);
 
       const { data: existing } = await supabase
         .from('newsletters')

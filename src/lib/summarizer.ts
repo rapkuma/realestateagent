@@ -13,7 +13,8 @@ export interface NewsletterContent {
 // 1. 개별 아파트 물건(단지)별 심층 분석 블로그 아티클 생성기
 export async function generateApartmentPost(
   apt: ApartmentData,
-  pdfText?: string
+  pdfText?: string,
+  pdfUrl?: string
 ): Promise<NewsletterContent> {
   const apiKey = process.env.OPENAI_API_KEY;
   const todayStr = format(new Date(), 'yyyy년 M월 d일', { locale: ko });
@@ -139,6 +140,7 @@ ${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼�
         ],
         response_format: { type: 'json_object' },
         temperature: 0.2,
+        max_tokens: 16384,
       });
 
       const rawJson = response.choices[0].message.content;
@@ -146,6 +148,10 @@ ${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼�
         const parsed = JSON.parse(rawJson);
 
         // 100% 할루시네이션 방지: 코드 레벨에서 정부 청약홈 공공데이터 팩트 박스를 상단에 자동 결합
+        const pdfButtonHtml = pdfUrl 
+          ? `<a href="${pdfUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background-color: #2563eb; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">📄 공식 입주자모집공고문 다운로드 (PDF)</a>` 
+          : '';
+
         const officialFactBoxHtml = `
           <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #2563eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="font-weight: 800; font-size: 14px; color: #0f172a; margin-bottom: 10px; display: flex; items-center; gap: 6px;">
@@ -158,6 +164,9 @@ ${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼�
               <div><b>🏢 시공사/브랜드:</b> <span>${apt.builder || '주요 건설사'}</span></div>
               <div><b>📐 공급 규모:</b> <span>${apt.supply_scale || '미정'}</span></div>
             </div>
+            <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+              ${pdfButtonHtml}
+            </div>
           </div>
         `;
 
@@ -169,13 +178,15 @@ ${pdfText ? '특히, 첨부된 [모집공고문 원본 추출 텍스트]를 꼼�
           content_html: finalContentHtml,
           apt_name: apt.apt_name,
         };
+      } else {
+        console.error(`❌ [OpenAI] ${apt.apt_name} rawJson is empty`);
       }
     } catch (err) {
       console.error(`❌ [OpenAI] ${apt.apt_name} 단독 분석 생성 오류:`, err);
     }
   }
 
-  return generateSingleAptFallback(apt, todayStr);
+  return generateSingleAptFallback(apt, todayStr, pdfUrl);
 }
 
 // 2. 전체 단지 종합 브리핑 뉴스레터 생성기
@@ -259,8 +270,12 @@ export async function generateNewsletterSummary(
 // 단일 아파트 단지 Fallback HTML 생성 (2026년 8월 기준 이중 규제 공식 완비)
 function generateSingleAptFallback(
   apt: ApartmentData,
-  todayStr: string
+  todayStr: string,
+  pdfUrl?: string
 ): NewsletterContent {
+  const pdfButtonHtml = pdfUrl 
+    ? `<a href="${pdfUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background-color: #2563eb; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">📄 공식 입주자모집공고문 다운로드 (PDF)</a>` 
+    : '';
   const title = `[${apt.apt_name}] ${apt.supply_type || '청약 줍줍'} 평형별 세대수·분양가·2026.8대출규제 자금시뮬레이션 심층 분석`;
   const summary_text = `${apt.apt_name}의 평형별 공급 세대수, 2026년 8월 기준 주담대 이중 규제(LTV+가격대별 절대한도) 자금 조달 시뮬레이션, 네이버 지도 연동 4대 입지 분석 리포트입니다.`;
 
@@ -402,9 +417,10 @@ function generateSingleAptFallback(
         <p style="font-size: 14px; color: #64748b; margin: 0 0 6px 0;">📍 공급 위치: <strong>${apt.location}</strong></p>
         <p style="font-size: 14px; color: #64748b; margin: 0 0 14px 0;">🏗️ 시공사/규모: ${apt.builder || '1군 건설사'} · ${apt.supply_scale}</p>
         
-        <!-- 네이버 지도 바로가기 버튼 -->
-        <div>
-          <a href="${naverMapUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; background-color: #03C75A; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(3, 199, 90, 0.2);">
+        <!-- 네이버 지도 & PDF 버튼 -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;">
+          ${pdfButtonHtml}
+          <a href="${naverMapUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; background-color: #03C75A; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(3, 199, 90, 0.2);">
             🗺️ 네이버 지도로 현장 위치 & 주변 로드뷰 보기 ➔
           </a>
         </div>
