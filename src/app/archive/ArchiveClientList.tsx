@@ -558,20 +558,8 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                   </Link>
                 </CardHeader>
 
-                <CardFooter className={`p-3 border-t flex items-center gap-2 ${isToday ? 'bg-blue-50/80 border-blue-200/80' : isEnded ? 'bg-slate-200/50 border-slate-300/60' : 'bg-slate-50/70 border-slate-100'}`}>
-                  {pdfUrl && (
-                    <a
-                      href={pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-3 h-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-xs transition-colors shrink-0 gap-1.5 shadow-xs"
-                      title="공식 모집공고문 원본 PDF 다운로드"
-                    >
-                      <FileText className="h-3.5 w-3.5 text-rose-600" />
-                      <span>PDF 공고문</span>
-                    </a>
-                  )}
-                  <Link href={`/archive/${item.id}`} className="flex-1">
+                <CardFooter className={`p-3 border-t ${isToday ? 'bg-blue-50/80 border-blue-200/80' : isEnded ? 'bg-slate-200/50 border-slate-300/60' : 'bg-slate-50/70 border-slate-100'}`}>
+                  <Link href={`/archive/${item.id}`} className="w-full block">
                     <Button
                       variant="default"
                       size="sm"
