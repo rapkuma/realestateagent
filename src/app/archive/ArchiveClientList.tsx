@@ -493,6 +493,21 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
             const pdfUrl = pdfMatch ? pdfMatch[0].replace(/&amp;/g, '&') : null;
             const hasPdf = !!pdfUrl || item.content_html.includes('getAtchmnfl.do') || item.content_html.includes('모집공고문 다운로드');
 
+            // 오늘 수집된 건 판별 (생성일이 오늘이거나 24시간 이내 수집된 건)
+            const isNew = (() => {
+              const targetDate = item.created_at || item.sent_at;
+              if (!targetDate) return false;
+              try {
+                const now = new Date();
+                const created = new Date(targetDate);
+                const isSameDay = format(now, 'yyyy-MM-dd') === format(created, 'yyyy-MM-dd');
+                const isWithin24h = (now.getTime() - created.getTime()) < 24 * 60 * 60 * 1000 && (now.getTime() - created.getTime()) >= 0;
+                return isSameDay || isWithin24h;
+              } catch {
+                return false;
+              }
+            })();
+
             return (
               <Card
                 key={item.id}
@@ -505,13 +520,18 @@ export function ArchiveClientList({ initialNewsletters }: ArchiveClientListProps
                 }
               >
                 <CardHeader className="p-5 space-y-3">
-                  {/* Top Row: Region Badge & PDF Badge (Left) + Status / Date (Right) */}
+                  {/* Top Row: Region Badge & NEW & PDF Badge (Left) + Status / Date (Right) */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                       <span className={`inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-lg border ${regionColor} shadow-xs`}>
                         <MapPin className="h-3 w-3" />
                         {item.region}
                       </span>
+                      {isNew && (
+                        <span className="inline-flex items-center gap-0.5 text-xs font-black px-2 py-1 rounded-lg bg-emerald-600 text-white shadow-xs tracking-wider animate-pulse">
+                          ✨ NEW
+                        </span>
+                      )}
                       {hasPdf && (
                         <span className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 shadow-xs">
                           <FileText className="h-3.5 w-3.5 text-rose-600" />
